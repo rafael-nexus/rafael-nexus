@@ -6,6 +6,25 @@ document.querySelectorAll('form[data-confirm]').forEach(form => {
 const form = document.getElementById('clip-form');
 if (form) {
   form.addEventListener('submit', e => {
+    // Catch files over the server's upload limit before spending minutes uploading them.
+    const max = Number(form.dataset.maxBytes) || Infinity;
+    let total = 0;
+    for (const input of form.querySelectorAll('input[type=file]')) {
+      for (const f of input.files) {
+        total += f.size;
+        if (f.size > max) {
+          e.preventDefault();
+          alert('"' + f.name + '" is larger than this server allows (' + form.dataset.maxLabel + ').\n\n' +
+            'Upload it with your FTP app into the data/inbox folder, reload this page and pick it from the list.');
+          return;
+        }
+      }
+    }
+    if (total > max) {
+      e.preventDefault();
+      alert('Together these files are larger than this server allows (' + form.dataset.maxLabel + '). Upload the master by FTP instead.');
+      return;
+    }
     if (!window.FormData || !window.XMLHttpRequest) return;
     e.preventDefault();
     const box = form.querySelector('.upload-progress');
