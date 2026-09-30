@@ -43,6 +43,28 @@ Without `STRIPE_SECRET_KEY`, local purchases run in **demo mode** (no payment, i
 7. Sign in at `/admin`, then open **Site settings** and fill in your **Imprint** and **Licence terms**.
    An imprint (Impressum) is legally required for commercial sites in Germany.
 
+### On a host with SSH (no root access)
+
+```bash
+node -v                       # need v22.13 or newer; if missing or older:
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+source ~/.bashrc && nvm install 22
+
+cd ~/film-archives
+npm install --omit=dev
+cp .env.example .env && nano .env   # fill in the values; npm start reads .env automatically
+npm start                           # quick test, stop with Ctrl+C
+
+# keep it running and restart it after reboots
+npm install -g pm2
+pm2 start npm --name film-archives -- start
+pm2 save
+(crontab -l 2>/dev/null; echo "@reboot $(which pm2) resurrect") | crontab -
+```
+
+The site listens on `PORT` (default 3000). Ask your host to route film-archives.com to that port
+with HTTPS, or set it up yourself if your plan offers a proxy or reverse-proxy option.
+
 ## Layout
 
 ```
