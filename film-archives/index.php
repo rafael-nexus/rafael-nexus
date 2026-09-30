@@ -30,13 +30,10 @@ set_exception_handler(function (Throwable $e) {
 // ---------- Work out the requested path ----------
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-if (!empty($_SERVER['PATH_INFO'])) {
-    $path = $_SERVER['PATH_INFO'];
-} else {
-    $path = rawurldecode(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
-    if (base_dir() !== '' && str_starts_with($path, base_dir())) $path = substr($path, strlen(base_dir()));
-    if (str_starts_with($path, '/index.php')) $path = substr($path, strlen('/index.php'));
-}
+// Taken from REQUEST_URI rather than PATH_INFO, which PHP-FPM setups fill in inconsistently.
+$path = rawurldecode(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
+if (base_dir() !== '' && str_starts_with($path, base_dir() . '/')) $path = substr($path, strlen(base_dir()));
+if (str_starts_with($path, '/index.php')) $path = substr($path, strlen('/index.php'));
 $path = '/' . trim($path, '/');
 
 function not_found(): void

@@ -21,18 +21,18 @@ def free_port():
     s = socket.socket(); s.bind(('127.0.0.1', 0)); p = s.getsockname()[1]; s.close(); return p
 
 
-def run(pretty):
+def run(pretty, fpm=False):
     root = tempfile.mkdtemp(prefix='fa-php-')
     shutil.copytree(SRC, root, dirs_exist_ok=True)
     port = free_port()
-    env = dict(os.environ, FA_WEBROOT=root, PRETTY='1' if pretty else '0')
+    env = dict(os.environ, FA_WEBROOT=root, PRETTY='1' if pretty else '0', FPM='1' if fpm else '0')
     srv = subprocess.Popen(['php', '-d', 'upload_max_filesize=8M', '-d', 'post_max_size=10M',
                             '-S', f'127.0.0.1:{port}', os.path.join(HERE, 'router.php')],
                            cwd=root, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
     base = f'http://127.0.0.1:{port}'
     time.sleep(0.8)
     P = '' if pretty else '/index.php'
-    print(f"\n== {'pretty URLs' if pretty else '/index.php/ URLs'} ==")
+    print(f"\n== {'pretty URLs' if pretty else '/index.php/ URLs'}{' (PHP-FPM style)' if fpm else ''} ==")
     try:
         s = requests.Session()
         g = lambda path, **kw: s.get(base + P + path, allow_redirects=False, **kw)
@@ -111,6 +111,10 @@ def run(pretty):
         check('Berlin' in pub.get(base + P + '/', params={'q': 'Potsdamer'}).text, 'search in description')
 
         page = pub.get(base + P + '/clips/berlin-street-life-1928').text
+        css = re.search(r'href="([^"]+styles\.css[^"]*)"', page).group(1)
+        check(css.startswith('/assets/') and pub.get(base + css).status_code == 200, 'stylesheet link works on clip pages')
+        link = re.search(r'class="brand" href="([^"]+)"', page).group(1)
+        check(link in ('/', '/index.php/'), 'home link correct on clip pages')
         thumb = re.search(r'<img src="([^"]+)"', home).group(1)
         r = pub.get(base + thumb)
         check(r.status_code == 200 and r.headers['Content-Type'] == 'image/png', 'thumbnail served')
@@ -177,7 +181,7 @@ def run(pretty):
         shutil.rmtree(root, ignore_errors=True)
 
 
-for pretty in (True, False):
-    run(pretty)
+for pretty, fpm in ((True, False), (False, False), (True, True)):
+    run(pretty, fpm)
 print(f"\n{'ALL PASSED' if not FAILS else str(len(FAILS)) + ' FAILED'}")
 sys.exit(1 if FAILS else 0)

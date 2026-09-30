@@ -43,10 +43,21 @@ function site_origin(): string
     return (is_https() ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
 }
 
+// URL path of the site folder ('' when installed at the domain root, '/shop' in a subfolder).
+// Worked out from the file system, because SCRIPT_NAME is unreliable behind PHP-FPM with rewrites.
 function base_dir(): string
 {
-    $dir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/index.php')), '/');
-    return $dir === '.' ? '' : $dir;
+    static $dir = null;
+    if ($dir !== null) return $dir;
+    $docRoot = realpath((string)($_SERVER['DOCUMENT_ROOT'] ?? ''));
+    $root = realpath(FA_ROOT);
+    if ($docRoot && $root && str_starts_with($root . '/', rtrim($docRoot, '/') . '/')) {
+        $dir = rtrim(str_replace('\\', '/', substr($root, strlen(rtrim($docRoot, '/')))), '/');
+    } else {
+        $script = str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? ''));
+        $dir = str_ends_with($script, '/index.php') ? rtrim(dirname($script), '/') : '';
+    }
+    return $dir;
 }
 
 // Pretty URLs (/clips/x) when .htaccess rewriting works, otherwise /index.php/clips/x.

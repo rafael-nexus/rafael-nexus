@@ -6,7 +6,9 @@ if (preg_match('#^/(app|data)(/|$)#', $p)) { http_response_code(403); exit('Forb
 if (preg_match('#\.(sqlite|db|log|ini)$#', $p)) { http_response_code(403); exit('Forbidden'); }
 if ($p !== '/' && is_file($root . $p) && !str_ends_with($p, '.php')) return false;
 if (getenv('PRETTY') === '1' && !str_starts_with($p, '/index.php')) $_SERVER['REDIRECT_FA_PRETTY'] = '1';
-$_SERVER['SCRIPT_NAME'] = '/index.php';
+// FPM=1 imitates PHP-FPM behind mod_rewrite, where SCRIPT_NAME can be the requested path.
+$_SERVER['SCRIPT_NAME'] = getenv('FPM') === '1' ? $p : '/index.php';
+$_SERVER['DOCUMENT_ROOT'] = $root;
 $_SERVER['SCRIPT_FILENAME'] = $root . '/index.php';
 unset($_SERVER['PATH_INFO']);
 chdir($root);
