@@ -119,3 +119,10 @@ test('sold clips cannot be deleted', async () => {
   const res = await req(`/admin/clips/${clip_id}/delete`, { method: 'POST' });
   assert.equal(res.status, 409);
 });
+
+test('login cookie works over plain HTTP but is Secure behind HTTPS', async () => {
+  const plain = await req('/admin/login', form({ password: 'secret-pass' }));
+  assert.doesNotMatch(plain.headers.get('set-cookie'), /Secure/);
+  const https = await req('/admin/login', { ...form({ password: 'secret-pass' }), headers: { 'content-type': 'application/x-www-form-urlencoded', 'x-forwarded-proto': 'https' } });
+  assert.match(https.headers.get('set-cookie'), /Secure/);
+});

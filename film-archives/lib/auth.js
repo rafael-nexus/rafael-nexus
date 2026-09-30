@@ -27,10 +27,11 @@ function isAdmin(req) {
   return safeEqual(sig, sign(expires)) && Number(expires) > Date.now();
 }
 
-function login(res) {
+// Marked Secure whenever the request arrived over HTTPS, so login still works on a plain-HTTP setup.
+function login(req, res) {
   const expires = String(Date.now() + SESSION_HOURS * 3600e3);
   res.cookie(COOKIE, `${expires}.${sign(expires)}`, {
-    httpOnly: true, sameSite: 'strict', secure: config.production, maxAge: SESSION_HOURS * 3600e3, path: '/',
+    httpOnly: true, sameSite: 'strict', secure: req.secure, maxAge: SESSION_HOURS * 3600e3, path: '/',
   });
 }
 

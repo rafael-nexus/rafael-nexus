@@ -137,7 +137,7 @@ app.get('/imprint', (req, res) =>
 app.get('/admin/login', (req, res) => {
   if (auth.isAdmin(req)) return res.redirect('/admin');
   const error = config.adminPassword ? '' : 'ADMIN_PASSWORD is not set on the server, so login is disabled.';
-  render(req, res, { title: 'Seller login', body: views.login({ error, next: req.query.next || '/admin' }) });
+  render(req, res, { title: 'Seller login', body: views.login({ error, next: req.query.next || '/admin', insecure: !req.secure }) });
 });
 
 app.post('/admin/login', (req, res) => {
@@ -149,7 +149,7 @@ app.post('/admin/login', (req, res) => {
     auth.recordFailure(req.ip);
     return render(req, res, { status: 401, title: 'Seller login', body: views.login({ error: 'Wrong password.', next }) });
   }
-  auth.login(res);
+  auth.login(req, res);
   res.redirect(303, next);
 });
 

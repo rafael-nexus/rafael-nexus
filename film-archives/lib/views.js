@@ -150,9 +150,10 @@ function textPage({ heading, text }) {
   return `<section class="panel narrow"><h1>${esc(heading)}</h1><div class="prose">${paragraphs(text)}</div></section>`;
 }
 
-function login({ error, next }) {
+function login({ error, next, insecure }) {
   return `<section class="panel narrow">
   <h1>Seller login</h1>
+  ${insecure ? '<p class="note">This connection is not encrypted (HTTP). Enable SSL/HTTPS before using the site for real.</p>' : ''}
   ${error ? `<p class="warn">${esc(error)}</p>` : ''}
   <form method="post" action="/admin/login" class="form">
     <input type="hidden" name="next" value="${esc(next)}">
