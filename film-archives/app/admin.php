@@ -51,8 +51,9 @@ if ($method === 'POST' && $path === '/admin/logout') {
 // Checks that the data folder can't be downloaded directly from the web (it holds masters and the database).
 function data_folder_exposed(): bool
 {
-    start_session();
-    if (isset($_SESSION['data_exposed_checked'])) return $_SESSION['data_exposed_checked'];
+    // Re-checked at most once an hour; the result is kept in settings as "timestamp|0 or 1".
+    [$at, $result] = array_pad(explode('|', setting('data_check')), 2, '0');
+    if (time() - (int)$at < 3600) return $result === '1';
     $exposed = false;
     if (FA_DATA_DIR === FA_ROOT . '/data' && function_exists('curl_init')) {
         $ch = curl_init(site_origin() . base_dir() . '/data/film-archives.sqlite');
@@ -61,7 +62,8 @@ function data_folder_exposed(): bool
         $exposed = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE) === 200;
         curl_close($ch);
     }
-    return $_SESSION['data_exposed_checked'] = $exposed;
+    save_settings(['data_check' => time() . '|' . ($exposed ? '1' : '0')]);
+    return $exposed;
 }
 
 if ($method === 'GET' && $path === '/admin') {
@@ -103,6 +105,7 @@ if ($path === '/admin/settings') {
             $values['admin_password_hash'] = password_hash($new, PASSWORD_DEFAULT);
         }
         save_settings($values);
+        if (isset($values['admin_password_hash'])) admin_login(); // stay logged in on this device
         redirect(url('/admin/settings', ['saved' => 1]));
     }
     $welcome = isset($_GET['welcome']) ? 'Password saved. Now fill in your site details, imprint and (when ready) your Stripe key.' : '';

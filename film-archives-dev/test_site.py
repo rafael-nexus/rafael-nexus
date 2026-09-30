@@ -26,7 +26,7 @@ def run(pretty, fpm=False):
     shutil.copytree(SRC, root, dirs_exist_ok=True)
     port = free_port()
     env = dict(os.environ, FA_WEBROOT=root, PRETTY='1' if pretty else '0', FPM='1' if fpm else '0')
-    srv = subprocess.Popen(['php', '-d', 'upload_max_filesize=8M', '-d', 'post_max_size=10M',
+    srv = subprocess.Popen(['php', '-d', 'upload_max_filesize=8M', '-d', 'session.save_path=/nonexistent-session-dir', '-d', 'post_max_size=10M',
                             '-S', f'127.0.0.1:{port}', os.path.join(HERE, 'router.php')],
                            cwd=root, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
     base = f'http://127.0.0.1:{port}'
@@ -166,6 +166,18 @@ def run(pretty, fpm=False):
         # Edit keeps master when none uploaded
         r = post(f'/admin/clips/{berlin}', data=dict(data, csrf=token, price='199'))
         check(r.status_code == 303 and '€199.00' in pub.get(base + '/').text, 'edit updates price and keeps master')
+
+        # Password change keeps this device logged in, and the new password works
+        r = post('/admin/settings', data={'csrf': token, 'new_password': PASSWORD + '2', 'currency': 'eur',
+                                          'download_ttl_hours': '72', 'max_downloads': '2', 'stripe_secret_key': '',
+                                          'stripe_webhook_secret': 'whsec_test'})
+        check(r.status_code == 303 and g('/admin').status_code == 200, 'still logged in after changing password')
+        check(requests.post(base + P + '/admin/login', data={'password': PASSWORD}, allow_redirects=False).status_code == 401,
+              'old password no longer works')
+        r = post('/admin/settings', data={'csrf': csrf(g('/admin').text), 'new_password': PASSWORD, 'currency': 'eur',
+                                          'download_ttl_hours': '72', 'max_downloads': '2', 'stripe_secret_key': '',
+                                          'stripe_webhook_secret': 'whsec_test'})
+        token = csrf(g('/admin').text)
 
         # Logout and wrong password
         post('/admin/logout', data={'csrf': token})

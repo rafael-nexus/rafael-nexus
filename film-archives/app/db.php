@@ -74,12 +74,14 @@ const DEFAULT_SETTINGS = [
     'download_ttl_hours' => '72',
     'max_downloads' => '5',
     'admin_password_hash' => '',
+    'session_secret' => '',
+    'data_check' => '',
 ];
 
-function settings(): array
+function settings(bool $reload = false): array
 {
     static $cache = null;
-    if ($cache === null) {
+    if ($cache === null || $reload) {
         $cache = DEFAULT_SETTINGS;
         foreach (q('SELECT key, value FROM settings')->fetchAll() as $r) $cache[$r['key']] = $r['value'];
     }
@@ -97,6 +99,7 @@ function save_settings(array $values): void
     foreach ($values as $k => $v) {
         if (array_key_exists($k, DEFAULT_SETTINGS)) $st->execute([$k, trim((string)$v)]);
     }
+    settings(true);
 }
 
 // ---------- Clips ----------
