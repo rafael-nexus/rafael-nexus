@@ -107,7 +107,9 @@ if ($method === 'POST' && route('/clips/([a-z0-9-]+)/buy', $path, $m)) {
         $session = stripe_create_checkout($order, $clip);
     } catch (Throwable $e) {
         error_log('Film Archives: ' . $e->getMessage());
-        render($clip['title'], view_clip($clip, true, false, false, 'Payment could not be started. Please try again later.'), 502);
+        // The seller sees Stripe's actual reason; buyers get a generic message.
+        $msg = 'Payment could not be started. Please try again later.' . (is_admin() ? ' (Stripe said: ' . $e->getMessage() . ')' : '');
+        render($clip['title'], view_clip($clip, true, false, false, $msg), 502);
     }
     q('UPDATE orders SET stripe_session_id = ? WHERE id = ?', [$session['id'], $order['id']]);
     redirect($session['url']);
