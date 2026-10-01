@@ -109,18 +109,19 @@ function bytes_label($n): string
     return number_format($n, $i ? 1 : 0) . ' ' . $units[$i];
 }
 
-// Converts php.ini sizes such as "64M" to bytes.
+// Converts php.ini sizes such as "64M" to bytes. Calculated as float and capped, because on
+// 32-bit PHP (like the production server) values of 2 GB and more don't fit in an int.
 function ini_bytes(string $v): int
 {
     $v = trim($v);
-    if ($v === '' || $v === '-1') return PHP_INT_MAX;
-    $n = (int)$v;
+    if ($v === '' || $v === '-1' || $v === '0') return PHP_INT_MAX;
+    $n = (float)$v;
     switch (strtolower(substr($v, -1))) {
-        case 'g': $n *= 1024;
-        case 'm': $n *= 1024;
-        case 'k': $n *= 1024;
+        case 'g': $n *= 1024 * 1024 * 1024; break;
+        case 'm': $n *= 1024 * 1024; break;
+        case 'k': $n *= 1024; break;
     }
-    return $n;
+    return $n >= PHP_INT_MAX ? PHP_INT_MAX : (int)$n;
 }
 
 function max_upload_bytes(): int

@@ -151,6 +151,10 @@ function save_clip_files(array $fields, ?array $existing): array
     $inbox = basename((string)($_POST['inbox_file'] ?? ''));
     $inboxPath = $inbox !== '' ? data_path('inbox', $inbox) : '';
     if ($inbox !== '' && !is_file($inboxPath)) return [$fields, 'The selected FTP file no longer exists in data/inbox.'];
+    // 32-bit PHP (like the production server) can't read or stream files of 2 GB or more.
+    if ($inbox !== '' && PHP_INT_SIZE === 4 && ((int)@filesize($inboxPath) <= 0 || (int)@filesize($inboxPath) >= 2147483647)) {
+        return [$fields, 'This server can only handle master files under 2 GB. Please export a smaller version (e.g. ProRes Proxy or H.264) and try again.'];
+    }
     if (!$existing && !has_upload($master) && $inbox === '') return [$fields, 'Please choose a master file (or pick one uploaded by FTP).'];
     if (has_upload($preview) && !isset(PREVIEW_TYPES[file_ext($preview['name'])])) return [$fields, 'The preview must be an MP4 or WebM video.'];
     if (has_upload($thumb) && (!isset(THUMB_TYPES[file_ext($thumb['name'])]) || !is_real_image($thumb['tmp_name']))) {

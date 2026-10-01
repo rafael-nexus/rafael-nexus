@@ -94,7 +94,7 @@ function inbox_files(): array
 {
     $out = [];
     foreach (glob(data_path('inbox') . '/*') ?: [] as $p) {
-        if (is_file($p) && basename($p)[0] !== '.' && basename($p) !== 'index.html') $out[basename($p)] = filesize($p);
+        if (is_file($p) && basename($p)[0] !== '.' && basename($p) !== 'index.html') $out[basename($p)] = max(0, (int)@filesize($p));
     }
     ksort($out, SORT_NATURAL | SORT_FLAG_CASE);
     return $out;
