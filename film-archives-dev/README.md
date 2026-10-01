@@ -8,7 +8,8 @@ This `film-archives-dev/` folder is only for development and testing. Don't uplo
 ## Requirements
 
 - PHP 8.1 or newer with `pdo_sqlite` (standard on most hosts)
-- Apache with `.htaccess` support (for pretty URLs and to protect the `data` folder)
+- Apache with `.htaccess` support (for pretty URLs, the HTTP→HTTPS redirect and to protect the `data` folder)
+- HTTPS: `.htaccess` redirects all traffic to HTTPS. On a host without SSL, remove the redirect block at the top of `.htaccess`
 - Optional: `curl` (Stripe; falls back to PHP streams) and `gd` (shrinks thumbnails)
 
 ## Install
