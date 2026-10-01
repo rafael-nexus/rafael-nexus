@@ -8,10 +8,14 @@ if (is_file(__DIR__ . '/../config.php')) require __DIR__ . '/../config.php';
 define('FA_ROOT', dirname(__DIR__));
 if (!defined('FA_DATA_DIR')) define('FA_DATA_DIR', FA_ROOT . '/data');
 
+// Files the site creates (database, masters, previews) are readable by the site's own user only,
+// so other customers on a shared server can't read them. Apache never serves them directly.
+umask(0077);
+
 const FA_DIRS = ['masters', 'previews', 'thumbs', 'inbox', 'tmp'];
 foreach (FA_DIRS as $d) {
     $path = FA_DATA_DIR . '/' . $d;
-    if (!is_dir($path)) @mkdir($path, 0755, true);
+    if (!is_dir($path)) @mkdir($path, 0700, true);
 }
 
 require __DIR__ . '/db.php';
