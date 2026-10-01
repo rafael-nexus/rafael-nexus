@@ -48,6 +48,9 @@ function stripe_create_checkout(array $order, array $clip): array
         'customer_email' => $order['email'],
         'client_reference_id' => $order['id'],
         'metadata' => ['order_id' => $order['id']],
+        // Stripe may enable Managed Payments (merchant of record, extra fee) by default, which then
+        // requires product tax codes. This shop handles payments itself, so opt out per session.
+        'managed_payments' => ['enabled' => 'false'],
         'line_items' => [[
             'quantity' => 1,
             'price_data' => [
