@@ -11,6 +11,7 @@ This `film-archives-dev/` folder is only for development and testing. Don't uplo
 - Apache with `.htaccess` support (for pretty URLs, the HTTP→HTTPS redirect and to protect the `data` folder)
 - HTTPS: `.htaccess` redirects all traffic to HTTPS. On a host without SSL, remove the redirect block at the top of `.htaccess`
 - Optional: `curl` (Stripe; falls back to PHP streams) and `gd` (shrinks thumbnails)
+- Thumbnails and the 15-second watermarked preview are created in the seller's browser (canvas + MediaRecorder) when a master video is chosen, so no ffmpeg is needed on the server
 
 ## Install
 

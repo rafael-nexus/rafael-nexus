@@ -16,7 +16,7 @@ if (!is_writable(FA_DATA_DIR)) {
 
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: same-origin');
-header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; media-src 'self'; frame-ancestors 'none'; "
+header("Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; frame-ancestors 'none'; "
     . "form-action 'self' https://checkout.stripe.com; base-uri 'none'; object-src 'none'");
 
 set_exception_handler(function (Throwable $e) {

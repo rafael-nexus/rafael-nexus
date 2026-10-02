@@ -246,12 +246,14 @@ function view_clip_form(array $clip, string $error = ''): string
         . '<fieldset><legend>Files</legend>'
         . '<label>Master file ' . ($editing ? '(leave empty to keep: ' . e($clip['master_name']) . ')' : '<em>required</em>')
         . '<input type="file" name="master"><span class="hint">The full-quality file buyers download. Never shown publicly. Max ' . e($limit) . ' per upload on this server.</span></label>'
+        . '<div class="auto-preview"><label class="check"><input type="checkbox" checked> Create thumbnail and a 15-second watermarked preview from the master automatically</label>'
+        . '<p class="auto-status hint" aria-live="polite"></p><video hidden muted playsinline></video><img hidden alt="Thumbnail preview"></div>'
         . '<label>…or pick a large master you uploaded by FTP <select name="inbox_file">' . $inboxOpts . '</select>'
         . '<span class="hint">For files over ' . e($limit) . ': upload them with your FTP app into the <code>data/inbox</code> folder, then reload this page.</span></label>'
         . '<label>Preview clip (optional) <input type="file" name="preview" accept="video/mp4,video/webm,.mp4,.m4v,.webm">'
-        . '<span class="hint">A short, low-resolution or watermarked MP4 shown on the clip page. Keep it small (a few MB).</span></label>'
+        . '<span class="hint">Leave empty to use the automatic preview above, or upload your own short, low-resolution MP4.</span></label>'
         . '<label>Thumbnail (optional) <input type="file" name="thumbnail" accept="image/jpeg,image/png,image/webp">'
-        . '<span class="hint">JPEG, PNG or WebP still shown in the catalogue.</span></label>'
+        . '<span class="hint">Leave empty to use the automatic one, or upload your own JPEG, PNG or WebP.</span></label>'
         . ($editing && !empty($clip['preview_file']) ? '<label class="check"><input type="checkbox" name="remove_preview" value="1"> Remove current preview clip</label>' : '')
         . '</fieldset><fieldset><legend>Details</legend>'
         . '<label>Title <input name="title" required maxlength="140" value="' . $v('title') . '"></label>'
