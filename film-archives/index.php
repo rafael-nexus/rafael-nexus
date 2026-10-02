@@ -95,8 +95,9 @@ if ($method === 'POST' && route('/clips/([a-z0-9-]+)/buy', $path, $m)) {
     $clip = public_clip($m[1]);
     $email = mb_substr(trim((string)($_POST['email'] ?? '')), 0, 254);
     if ($clip['status'] !== 'published' || !purchases_open()) redirect(url('/clips/' . $clip['slug']));
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || ($_POST['agree'] ?? '') !== '1') {
-        render($clip['title'], view_clip($clip, true, !stripe_enabled(), false, 'Please enter a valid email address and accept the licence terms.'), 400);
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || ($_POST['agree'] ?? '') !== '1' || ($_POST['waiver'] ?? '') !== '1') {
+        render($clip['title'], view_clip($clip, true, !stripe_enabled(), false,
+            'Please enter a valid email address, accept the licence terms and confirm immediate delivery.'), 400);
     }
     $order = order_create($clip['id'], $email, (int)$clip['price_cents'], setting('currency'));
     if (!stripe_enabled()) {
@@ -149,6 +150,8 @@ if ($method === 'GET' && route('/download/([A-Za-z0-9_-]{20,64})', $path, $m)) {
 
 if ($method === 'GET' && $path === '/licence') render('Licence terms', view_text('Licence terms', setting('license_text')));
 if ($method === 'GET' && $path === '/imprint') render('Imprint', view_text('Imprint', setting('imprint_text')));
+if ($method === 'GET' && $path === '/privacy') render('Privacy policy', view_text('Privacy policy', setting('privacy_text')));
+if ($method === 'GET' && $path === '/withdrawal') render('Right of withdrawal', view_text('Right of withdrawal', setting('withdrawal_text')));
 
 if ($method === 'POST' && $path === '/webhooks/stripe') {
     $event = stripe_verify_webhook((string)file_get_contents('php://input'), (string)($_SERVER['HTTP_STRIPE_SIGNATURE'] ?? ''));

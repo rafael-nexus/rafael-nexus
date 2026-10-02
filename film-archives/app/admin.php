@@ -80,6 +80,11 @@ if ($method === 'GET' && $path === '/admin') {
     if (strpos(setting('imprint_text'), 'Operator name') !== false) {
         $warnings[] = 'Your imprint still contains the placeholder text. <a href="' . e(url('/admin/settings')) . '">Fill it in under Site settings.</a>';
     }
+    foreach (['privacy_text' => 'privacy policy', 'withdrawal_text' => 'right of withdrawal text'] as $key => $label) {
+        if (str_starts_with(setting($key), 'TEMPLATE')) {
+            $warnings[] = "Your $label is still the template. Review it and remove the first line under <a href=\"" . e(url('/admin/settings')) . '">Site settings</a>.';
+        }
+    }
     if ($inbox = inbox_files()) {
         $warnings[] = count($inbox) . ' file(s) waiting in <code>data/inbox</code>. Pick them in the form when you <a href="' . e(url('/admin/clips/new')) . '">upload a clip</a>.';
     }
@@ -90,7 +95,7 @@ if ($method === 'GET' && $path === '/admin') {
 
 if ($path === '/admin/settings') {
     if ($method === 'POST') {
-        $values = array_intersect_key($_POST, array_flip(['site_name', 'tagline', 'contact_email', 'license_text', 'imprint_text',
+        $values = array_intersect_key($_POST, array_flip(['site_name', 'tagline', 'contact_email', 'license_text', 'imprint_text', 'privacy_text', 'withdrawal_text',
             'stripe_secret_key', 'stripe_webhook_secret', 'currency', 'download_ttl_hours', 'max_downloads']));
         $values['currency'] = in_array($values['currency'] ?? '', ['eur', 'usd', 'gbp', 'chf'], true) ? $values['currency'] : 'eur';
         $values['download_ttl_hours'] = (string)max(1, (int)($values['download_ttl_hours'] ?? 72));

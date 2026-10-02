@@ -50,6 +50,9 @@ function db(): PDO
       CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS login_attempts (ip TEXT NOT NULL, at INTEGER NOT NULL);
     ");
+    // Added later: when the buyer agreed to immediate delivery and the loss of the right of withdrawal.
+    $cols = array_column($pdo->query('PRAGMA table_info(orders)')->fetchAll(), 'name');
+    if (!in_array('consent_at', $cols, true)) $pdo->exec('ALTER TABLE orders ADD COLUMN consent_at TEXT');
     return $pdo;
 }
 
@@ -67,6 +70,8 @@ const DEFAULT_SETTINGS = [
     'tagline' => 'Rare archival footage, digitised and licensed for your productions.',
     'license_text' => "Each purchase grants a non-exclusive, worldwide, perpetual licence to use the clip in one production (film, broadcast, online video or advertising). Resale or redistribution of the raw footage is not permitted. Contact us for exclusive or multi-production licences.",
     'imprint_text' => "Operator name\nStreet and number\nPostcode and city\nCountry\n\nEmail: contact@film-archives.com",
+    'privacy_text' => "TEMPLATE – please review and adapt (for example with a privacy policy generator or legal advice).\n\n1. Controller\nThe controller responsible for this website is the operator named in the imprint.\n\n2. Data we process\nWhen you buy a licence we store your email address, the clip purchased, the price, the time of purchase and the time you agreed to the licence terms and to immediate delivery. We need this to deliver the download, to prove the licence and to meet our tax and accounting duties (Art. 6(1)(b) and (c) GDPR). Order data is kept for the statutory retention period (up to 10 years).\n\n3. Payments\nPayments are processed by Stripe Payments Europe Ltd., 1 Grand Canal Street Lower, Dublin, Ireland. Your card or payment details are entered on Stripe's payment page and are never stored on this website. Stripe's privacy policy: https://stripe.com/privacy\n\n4. Hosting and server logs\nThis website is hosted by our hosting provider in Germany. When you visit the site, the web server records technical data such as your IP address, date and time and the page requested, to operate the site securely (Art. 6(1)(f) GDPR).\n\n5. Cookies and tracking\nThis website uses no tracking, analytics or advertising cookies and loads no external fonts or scripts. Only the seller's login uses a technically necessary cookie.\n\n6. Your rights\nYou have the right to access, rectification, erasure, restriction of processing, data portability and objection, and the right to lodge a complaint with a data protection supervisory authority. To exercise your rights, contact us at the email address in the imprint.",
+    'withdrawal_text' => "TEMPLATE – please review and adapt (for example with legal advice).\n\nRight of withdrawal for consumers\nIf you are a consumer, you generally have the right to withdraw from this contract within 14 days without giving any reason. The withdrawal period is 14 days from the day the contract is concluded. To exercise it, inform us (see imprint) by a clear statement, e.g. an email.\n\nEarly expiry for digital content\nThe footage on this website is digital content that is not supplied on a physical medium. Your right of withdrawal expires as soon as we begin delivering the download, provided that you have (1) expressly agreed that we begin before the end of the withdrawal period and (2) acknowledged that you thereby lose your right of withdrawal. You give this consent and acknowledgement with a checkbox before you pay; we confirm it on your order page.\n\nBusiness customers\nThe right of withdrawal does not apply to purchases made for commercial or professional purposes.",
     'contact_email' => 'contact@film-archives.com',
     'currency' => 'eur',
     'stripe_secret_key' => '',
@@ -198,7 +203,7 @@ function clip_has_orders(string $id): bool
 function order_create(string $clipId, string $email, int $amount, string $currency): array
 {
     $id = uuid();
-    q('INSERT INTO orders (id, clip_id, email, amount_cents, currency, download_token) VALUES (?, ?, ?, ?, ?, ?)',
+    q("INSERT INTO orders (id, clip_id, email, amount_cents, currency, download_token, consent_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))",
         [$id, $clipId, $email, $amount, $currency, random_token()]);
     return order_get($id);
 }

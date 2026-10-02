@@ -122,6 +122,10 @@ def run(pretty, fpm=False):
         r = pub.get(base + prev, headers={'Range': 'bytes=0-99'})
         check(r.status_code == 206 and len(r.content) == 100, 'preview supports Range requests (iPhone video)')
         check('Purchases are temporarily unavailable' in page, 'public cannot buy while Stripe is not set up')
+        for path, text in [('/privacy', 'Stripe Payments Europe'), ('/withdrawal', 'digital content')]:
+            r = pub.get(base + P + path)
+            check(r.status_code == 200 and text in r.text, f'{path} page renders')
+        check(f'href="{P}/privacy"' in home and f'href="{P}/withdrawal"' in home, 'footer links privacy and withdrawal pages')
 
         for path in ['/data/film-archives.sqlite', '/app/db.php', '/data/masters/']:
             check(pub.get(base + path).status_code in (403, 404), f'{path} blocked from the web')
@@ -131,9 +135,12 @@ def run(pretty, fpm=False):
         r = post('/clips/berlin-street-life-1928/buy', data={'email': 'buyer@studio.com'})
         check(r.status_code == 400, 'licence agreement required')
         r = post('/clips/berlin-street-life-1928/buy', data={'email': 'buyer@studio.com', 'agree': '1'})
+        check(r.status_code == 400, 'withdrawal waiver required')
+        r = post('/clips/berlin-street-life-1928/buy', data={'email': 'buyer@studio.com', 'agree': '1', 'waiver': '1'})
         check(r.status_code == 303 and '/orders/' in r.headers['Location'], 'demo purchase by seller')
         order_url = r.headers['Location']
         page = pub.get(base + order_url).text
+        check('lose your' in page and 'UTC you agreed' in page, 'order page confirms consent to immediate delivery')
         dl = re.search(r'href="([^"]*/download/[^"]+)"', page).group(1)
         r = pub.get(base + dl)
         check(r.status_code == 200 and r.content == master, 'buyer downloads the exact master')

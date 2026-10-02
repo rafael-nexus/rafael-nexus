@@ -50,8 +50,8 @@ input, select, textarea { width: 100%; font: inherit; color: var(--ink); backgro
 input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 input[type=file] { padding: .5rem; }
 label { display: block; font-weight: 600; font-size: .95rem; }
-label.check { display: flex; gap: .5rem; align-items: center; font-weight: 400; }
-label.check input { width: auto; margin: 0; }
+label.check { display: flex; gap: .5rem; align-items: flex-start; font-weight: 400; }
+label.check input { width: auto; margin: .3rem 0 0; flex: none; }
 .hint { display: block; font-weight: 400; color: var(--muted); font-size: .85rem; margin-top: .25rem; }
 .form { display: grid; gap: 1.1rem; }
 fieldset { border: 0; padding: 0; margin: 0 0 .5rem; display: grid; gap: 1.1rem; }

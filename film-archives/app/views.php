@@ -53,7 +53,7 @@ $body
   <div class="sprockets" aria-hidden="true"></div>
   <div class="wrap footer-inner">
     <span>© $year {$e($site['site_name'])}</span>
-    <nav><a href="{$e(url('/licence'))}">Licence terms</a><a href="{$e(url('/imprint'))}">Imprint</a><a href="mailto:{$e($site['contact_email'])}">Contact</a>$sellerLink</nav>
+    <nav><a href="{$e(url('/licence'))}">Licence terms</a><a href="{$e(url('/withdrawal'))}">Right of withdrawal</a><a href="{$e(url('/privacy'))}">Privacy</a><a href="{$e(url('/imprint'))}">Imprint</a><a href="mailto:{$e($site['contact_email'])}">Contact</a>$sellerLink</nav>
   </div>
 </footer>
 <script src="{$e(asset('upload.js'))}"></script>
@@ -135,7 +135,9 @@ function view_clip(array $c, bool $canBuy, bool $demo, bool $cancelled, string $
     $buy = $canBuy
         ? '<form method="post" action="' . e(url('/clips/' . $c['slug'] . '/buy')) . '">'
           . '<label>Email for your receipt and download link <input type="email" name="email" required autocomplete="email" placeholder="you@studio.com"></label>'
-          . '<label class="check"><input type="checkbox" name="agree" value="1" required> I accept the <a href="' . e(url('/licence')) . '" target="_blank">licence terms</a></label>'
+          . '<label class="check"><input type="checkbox" name="agree" value="1" required> <span>I accept the <a href="' . e(url('/licence')) . '" target="_blank">licence terms</a>.</span></label>'
+          . '<label class="check"><input type="checkbox" name="waiver" value="1" required> <span>I request immediate access to the download and acknowledge that I thereby lose my <a href="' . e(url('/withdrawal')) . '" target="_blank">right of withdrawal</a>.</span></label>'
+          . '<p class="small">Your email is used to deliver your order. See our <a href="' . e(url('/privacy')) . '" target="_blank">privacy policy</a>.</p>'
           . '<button class="btn btn-wide" type="submit">Buy &amp; download</button></form>'
           . ($demo ? '<p class="warn">Demo mode: Stripe is not set up yet, so no payment is taken. Add your Stripe key in Site settings before going live.</p>' : '')
         : '<p class="warn">Purchases are temporarily unavailable.</p>';
@@ -165,6 +167,7 @@ function view_order(array $order, array $clip): string
           . ' and expires ' . (int)setting('download_ttl_hours') . ' hours after purchase.</p>';
     return '<section class="panel narrow"><h1>Thank you!</h1><p>Your licence for <strong>' . e($clip['title']) . '</strong> is confirmed ('
         . e(money((int)$order['amount_cents'], $order['currency'])) . ').</p>' . $link
+        . (!empty($order['consent_at']) ? '<p class="small">On ' . e($order['consent_at']) . ' UTC you agreed to the <a href="' . e(url('/licence')) . '">licence terms</a>, requested immediate access to the download and acknowledged that you thereby lose your <a href="' . e(url('/withdrawal')) . '">right of withdrawal</a>. Please keep this page for your records.</p>' : '')
         . '<p class="small">Order reference: <code>' . e($order['id']) . '</code></p></section>';
 }
 
@@ -295,7 +298,9 @@ function view_settings(bool $saved, string $error = ''): string
         . ($saved ? '<div class="flash">Settings saved.</div>' : '') . ($error !== '' ? '<p class="warn">' . e($error) . '</p>' : '')
         . '<form class="form panel" method="post" action="' . e(url('/admin/settings')) . '">' . csrf_field()
         . '<fieldset><legend>Site</legend>' . $f('site_name', 'Site name') . $f('tagline', 'Tagline') . $f('contact_email', 'Contact email', 0, '', 'email')
-        . $f('license_text', 'Licence terms (shown to buyers)', 8) . $f('imprint_text', 'Imprint / legal notice (Impressum)', 8) . '</fieldset>'
+        . $f('license_text', 'Licence terms (shown to buyers)', 8) . $f('imprint_text', 'Imprint / legal notice (Impressum)', 8)
+        . $f('withdrawal_text', 'Right of withdrawal (Widerrufsbelehrung)', 10, 'Shown at /withdrawal and linked from the buy form.')
+        . $f('privacy_text', 'Privacy policy (Datenschutzerklärung)', 12, 'Shown at /privacy and linked in the footer and the buy form.') . '</fieldset>'
         . '<fieldset><legend>Payments (Stripe)</legend>'
         . $f('stripe_secret_key', 'Stripe secret key', 0, 'Starts with <code>sk_live_</code> (or <code>sk_test_</code> for testing). Find it at dashboard.stripe.com → Developers → API keys. Leave empty for demo mode.', 'password')
         . $f('stripe_webhook_secret', 'Stripe webhook signing secret', 0, 'Starts with <code>whsec_</code>. In Stripe, add a webhook endpoint <code>' . $webhook . '</code> for the event <code>checkout.session.completed</code>.', 'password')
