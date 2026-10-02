@@ -53,8 +53,14 @@ async function makePreviewAssets(file, video, { wantThumb, wantPreview, onProgre
     video.muted = true;
     video.playsInline = true;
     video.preload = 'auto';
+    const loaded = once(video, 'loadeddata', 20000);
     video.src = url;
-    await once(video, 'loadeddata', 15000);
+    video.load();
+    // iPhone Safari doesn't load video data until playback starts; muted inline play is allowed.
+    const kick = video.play();
+    if (kick) kick.then(() => video.pause()).catch(() => {});
+    await loaded;
+    video.pause();
     if (!video.videoWidth) throw new Error('no video track');
     const duration = isFinite(video.duration) ? video.duration : 0;
     const out = { thumb: null, preview: null, previewExt: null, duration };
